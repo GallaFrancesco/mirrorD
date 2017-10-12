@@ -1,0 +1,12 @@
+{
+	"name": "mirrord",
+	"authors": [
+		"francesco"
+	],
+	"dependencies": {
+		"vibe-d": "~>0.7.30"
+	},
+	"description": "A simple vibe.d server application.",
+	"copyright": "Copyright © 2017, francesco",
+	"license": "GPLv3"
+}
