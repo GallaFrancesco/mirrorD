@@ -5,14 +5,14 @@ import core.thread;
 
 import fswatch;
 
+
 class Monitor {
 
 	// time period (ms) between one loop and another (Thread.sleep)
 	private uint period = 100;
 
 	// values for the monitoring loop
-	enum eventType = { CREATE_SELF, DELETE_SELF, CREATED, DELETED, MODIFIED, RENAMED };
-
+	enum eventType { CREATE_SELF, DELETE_SELF, CREATED, DELETED, MODIFIED, RENAMED }
 	//TODO tree/hash table? of monitored directories, stored in memory at runtime
 
 	// constructor
