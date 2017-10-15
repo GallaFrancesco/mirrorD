@@ -1,6 +1,5 @@
 import vibe.vibe;
 import restapi;
-import monitor;
 import fileinfo;
 
 void main()
@@ -13,7 +12,6 @@ void main()
 	settings.port = 8080;
 	settings.bindAddresses = ["::1", "127.0.0.1"];
 	listenHTTP(settings, router);
-	//monitorDir("/home/francesco/test");
 	auto fi = new FileInfoManager ("/home/francesco/test");	
 
 	// run the webserver
