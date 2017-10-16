@@ -136,7 +136,7 @@ class FileInfoManager {
 	// just for debugging, from here downwards
 
 	private void _print (FileInfo root) {
-		writeln (root.path);
+		writefln ("%s %s", root.path, root.hash);
 		foreach (FileInfo child; root.children) {
 			_print(child);
 		}
