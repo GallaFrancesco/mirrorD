@@ -1,9 +1,12 @@
 import std.stdio;
 import std.file;
 import std.array;
+import utils_hash;
 
 class FileInfo {
 	string path;
+	ubyte[] hash;
+	bool isChanged = false;
 	bool isRoot; // equals depth = 0 if true
 	DirEntry info; // similar to 'stat' on a Posix system
 	//DirectoryMonitor monitor;
@@ -38,7 +41,7 @@ class FileInfoManager {
 		// root must be a directory
 		assert (this.root.info.isDir);
 
-		_load (this.root);
+		this._load (this.root);
 		printTree();
 	}
 
@@ -46,7 +49,8 @@ class FileInfoManager {
 		FileInfo f = new FileInfo();
 		f.path = d.name;
 		f.isRoot = false;
-		f.info = d; 
+		f.info = d;
+		f.hash = fileHash(f.path);
 		return f;
 	}
 
@@ -62,7 +66,6 @@ class FileInfoManager {
 			// create a new file struct
 			FileInfo current = this._createNode(d);
 			currentRoot.children[current.path] = current; 
-			// TODO hash
 		}
 
 		foreach (FileInfo child; currentRoot.children.values) {
@@ -71,15 +74,26 @@ class FileInfoManager {
 			}
 		}
 	}
-	
-	// check date change
-	private bool _dateChanged ( FileInfo file) {
+
+	// check file changed (modified)
+	private bool _changed ( FileInfo file) {
+		// get the new info
 		DirEntry newInfo = DirEntry (file.path); 
 		if ( !( newInfo.timeLastModified.opEquals(file.info.timeLastModified ))) {
-			return true;
+			// date changed, check hash
+			auto newHash = fileHash(newInfo.name);
+
+			if (!( hashesEqual(file.hash, newHash))) {
+				// file change confirmed, substitute new info
+				file.info = newInfo;
+				file.hash = newHash;
+				file.isChanged = true;
+				return true;
+			}
 		}
 		return false;
 	}
+
 
 	// check for new files in the subdir
 	// use dirEntries
@@ -93,7 +107,6 @@ class FileInfoManager {
 				FileInfo newFile = this._createNode(i);
 				// add it to the children
 				dir.children[i.name] = newFile;
-				// TODO hash
 			}
 		}
 	}
@@ -101,14 +114,17 @@ class FileInfoManager {
 	// traverse the tree recursively
 	// scan for new nodes
 	// on each node / leaf, check for changes
-	// check is performed using date and hashing (murmurhash)
+	// check is performed using date and hashing (only when dates don't match)
 	private void _traverseCheck (FileInfo current) {
 
-		if ( this._dateChanged(current)) {
-			// TODO hash
+		if ( this._changed(current)) {
+			// TODO manage change in files
 		}
-		// TODO finish, _scanNew, recursive
+		this._scanNew(current);
 
+		foreach (FileInfo child; current.children.values) {
+			_traverseCheck(child);
+		}
 	}
 
 	// reload the tree rooted @ this.root
