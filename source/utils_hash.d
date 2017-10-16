@@ -9,7 +9,6 @@ import std.stdio;
 // TODO this operation can be expensive, optimize it (for large files)
 // TODO find a way to detect ARM architecture
 ubyte[] fileHash (string fileName) {
-	assert (hasSha());
 	File file = File (fileName);
 	MurmurHash3!(128, 64) hash64;
 	MurmurHash3!32 hash32;
