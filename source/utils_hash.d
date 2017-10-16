@@ -17,7 +17,7 @@ ubyte[] fileHash (string fileName) {
 	bool amd64 = isX86_64();
 	ubyte [] res;
 
-	foreach (buffer; file.byChunk(512)) {
+	foreach (buffer; file.byChunk(4096*1024)) {
 		if (amd64) {
 			hash64.put(buffer);
 		} else {
