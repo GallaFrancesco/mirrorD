@@ -5,7 +5,7 @@ import utils_hash;
 
 class FileInfo {
 	string path;
-	ubyte[] hash;
+	ubyte[] hash = "";
 	bool isChanged = false;
 	bool isRoot; // equals depth = 0 if true
 	DirEntry info; // similar to 'stat' on a Posix system
@@ -50,7 +50,9 @@ class FileInfoManager {
 		f.path = d.name;
 		f.isRoot = false;
 		f.info = d;
-		f.hash = fileHash(f.path);
+		if (!d.isDir) {
+			f.hash = fileHash(f.path);
+		}
 		return f;
 	}
 
@@ -81,14 +83,15 @@ class FileInfoManager {
 		DirEntry newInfo = DirEntry (file.path); 
 		if ( !( newInfo.timeLastModified.opEquals(file.info.timeLastModified ))) {
 			// date changed, check hash
-			auto newHash = fileHash(newInfo.name);
-
-			if (!( hashesEqual(file.hash, newHash))) {
-				// file change confirmed, substitute new info
-				file.info = newInfo;
-				file.hash = newHash;
-				file.isChanged = true;
-				return true;
+			if (!(newInfo.isDir) {
+				auto newHash = fileHash(newInfo.name);
+				if (!( hashesEqual(file.hash, newHash))) {
+					// file change confirmed, substitute new info
+					file.info = newInfo;
+					file.hash = newHash;
+					file.isChanged = true;
+					return true;
+				}
 			}
 		}
 		return false;
