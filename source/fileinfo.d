@@ -137,10 +137,9 @@ class FileInfoManager {
 		this._traverseCheck (this.root);
 	}
 
-	// just for debugging, from here downwards
+//-- Debugging purposes, from here downwards
 
 	private void _print (FileInfo root) {
-		//writeln(hashesEqual(root.hash, fileHash("/home/francesco/test/1/23")));
 		writefln ("%s", root.path);
 		foreach (FileInfo child; root.children) {
 			_print(child);

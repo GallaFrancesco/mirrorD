@@ -5,9 +5,11 @@
 	],
 	"dependencies": {
 		"vibe-d": "~>0.7.30",
-		"fswatch": "~>0.2.0"
+		"fswatch": "~>0.2.0",
+		"argsd": "~>0.3.0"
 	},
 	"description": "A simple vibe.d server application.",
 	"copyright": "Copyright © 2017, francesco",
-	"license": "GPLv3"
+	"license": "GPLv3",
+	"versions": ["VibeDisableCommandLineParsing"]
 }

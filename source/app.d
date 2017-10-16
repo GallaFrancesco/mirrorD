@@ -1,9 +1,18 @@
 import vibe.vibe;
 import restapi;
 import fileinfo;
+import parseconfig;
+import args;
 
-void main()
+static string desc = "mirrord is a web server.\nIt can be used to monitor and mirror one or more directories in a decentralized way.";
+
+void main(string[] args)
 {
+	bool help = parseArgsWithConfigFile(configWriteable(), args);
+	if (help) {
+		printArgsHelp(config(), desc);
+		return;
+	}
 	// register the REST api
 	auto router = new URLRouter;
 	router.registerRestInterface(new API());
@@ -12,7 +21,7 @@ void main()
 	settings.port = 8080;
 	settings.bindAddresses = ["::1", "127.0.0.1"];
 	listenHTTP(settings, router);
-	auto fi = new FileInfoManager ("/home/francesco/test");	
+	auto fi = new FileInfoManager (config().directory);	
 
 	// run the webserver
 	logInfo("Please open http://127.0.0.1:8080/api/ in your browser.");
