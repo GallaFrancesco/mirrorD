@@ -1,11 +1,12 @@
 import std.stdio;
+import std.utf;
 import std.file;
 import std.array;
 import utils_hash;
 
 class FileInfo {
 	string path;
-	ubyte[] hash = "";
+	ubyte[] hash = [];
 	bool isChanged = false;
 	bool isRoot; // equals depth = 0 if true
 	DirEntry info; // similar to 'stat' on a Posix system
@@ -52,6 +53,7 @@ class FileInfoManager {
 		f.info = d;
 		if (!d.isDir) {
 			f.hash = fileHash(f.path);
+			//writefln("Computed hash of %s, result is %s", f.path, toUTF8(cast(char[])f.hash));
 		}
 		return f;
 	}
@@ -83,7 +85,7 @@ class FileInfoManager {
 		DirEntry newInfo = DirEntry (file.path); 
 		if ( !( newInfo.timeLastModified.opEquals(file.info.timeLastModified ))) {
 			// date changed, check hash
-			if (!(newInfo.isDir) {
+			if (!(newInfo.isDir)) {
 				auto newHash = fileHash(newInfo.name);
 				if (!( hashesEqual(file.hash, newHash))) {
 					// file change confirmed, substitute new info
@@ -139,7 +141,8 @@ class FileInfoManager {
 	// just for debugging, from here downwards
 
 	private void _print (FileInfo root) {
-		writefln ("%s %s", root.path, root.hash);
+		writeln(hashesEqual(root.hash, fileHash("/home/francesco/test/1/23")));
+		writefln ("%s", root.path);
 		foreach (FileInfo child; root.children) {
 			_print(child);
 		}

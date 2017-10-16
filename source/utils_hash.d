@@ -1,4 +1,5 @@
 import std.digest.murmurhash;
+import std.digest.sha;
 import core.cpuid;
 import std.algorithm.comparison;
 import std.stdio;
@@ -11,11 +12,12 @@ import std.stdio;
 ubyte[] fileHash (string fileName) {
 	File file = File (fileName);
 	MurmurHash3!(128, 64) hash64;
-	MurmurHash3!32 hash32;
+	MurmurHash3!(128, 32) hash32;
+	//SHA256 hash32;
 	bool amd64 = isX86_64();
 	ubyte [] res;
 
-	foreach (buffer; file.byChunk(4096*1024)) {
+	foreach (buffer; file.byChunk(512)) {
 		if (amd64) {
 			hash64.put(buffer);
 		} else {
