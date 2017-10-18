@@ -3,6 +3,7 @@ import std.utf;
 import std.file;
 import std.array;
 import utils_hash;
+import parseconfig;
 
 class FileInfo {
 	string path;
@@ -52,7 +53,7 @@ class FileInfoManager {
 		f.isRoot = false;
 		f.info = d;
 		if (!d.isDir) {
-			f.hash = fileHash(f.path);
+			f.hash = fileHash(f.path, config().digest);
 		}
 		return f;
 	}
@@ -85,7 +86,7 @@ class FileInfoManager {
 		if ( !( newInfo.timeLastModified.opEquals(file.info.timeLastModified ))) {
 			// date changed, check hash
 			if (!(newInfo.isDir)) {
-				auto newHash = fileHash(newInfo.name);
+				auto newHash = fileHash(newInfo.name, config().digest);
 				if (!( hashesEqual(file.hash, newHash))) {
 					// file change confirmed, substitute new info
 					file.info = newInfo;
