@@ -25,5 +25,5 @@ void main(string[] args)
 
 	// run the webserver
 	logInfo("Please open http://127.0.0.1:8080/api/ in your browser.");
-	runApplication();
+	//runApplication();
 }

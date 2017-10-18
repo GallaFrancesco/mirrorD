@@ -19,7 +19,7 @@ class FileInfoManager {
 
 	// contains a FileInfo structure
 	FileInfo root;
-
+	string[string] hashes;
 	private string _rootPath;
 
 	// constructor, requires the root path 
@@ -44,7 +44,12 @@ class FileInfoManager {
 		assert (this.root.info.isDir);
 
 		this._load (this.root);
-		printTree();
+		this._computeHashes ();
+	}
+
+	private void _computeHashes () {
+		fileHash(this.hashes, config().digest);
+		writeln(this.hashes);
 	}
 
 	private FileInfo _createNode (DirEntry d) {
@@ -53,7 +58,8 @@ class FileInfoManager {
 		f.isRoot = false;
 		f.info = d;
 		if (!d.isDir) {
-			f.hash = fileHash(f.path, config().digest);
+			//f.hash = fileHash(f.path, config().digest);
+			hashes[f.path] = "";
 		}
 		return f;
 	}
@@ -86,14 +92,14 @@ class FileInfoManager {
 		if ( !( newInfo.timeLastModified.opEquals(file.info.timeLastModified ))) {
 			// date changed, check hash
 			if (!(newInfo.isDir)) {
-				auto newHash = fileHash(newInfo.name, config().digest);
-				if (!( hashesEqual(file.hash, newHash))) {
-					// file change confirmed, substitute new info
-					file.info = newInfo;
-					file.hash = newHash;
-					file.isChanged = true;
-					return true;
-				}
+				//auto newHash = fileHash(newInfo.name, config().digest);
+				//if (!( hashesEqual(file.hash, newHash))) {
+					//// file change confirmed, substitute new info
+					//file.info = newInfo;
+					//file.hash = newHash;
+					//file.isChanged = true;
+					//return true;
+				//}
 			}
 		}
 		return false;

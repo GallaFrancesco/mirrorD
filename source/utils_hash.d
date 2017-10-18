@@ -1,48 +1,84 @@
 import std.digest.sha;
 import std.digest.crc;
 import std.digest.murmurhash;
+import std.algorithm : canFind;
 import std.stdio;
 import core.cpuid;
 import parseconfig;
+import std.parallelism;
 
 // to select the hashing algorithm
 string[] digestAlgorithms = [ "sha1", "sha256", "crc32", "mmhash"];
+
+// passed to the worker thread as a parameter
+struct HashParameters {
+	string filename;
+	string digest;
+}
+
+// synchronized means that only one thread
+// has access to this class at a time
+
 
 // read the file, hash it, return the hash
 // reading is performed with the f.byChunk() method in std.file
 // TODO this operation can be expensive, optimize it / make it parallel (for large files)
 // note that large files and sha256 means a LOT of time spent computing
 // TODO find a way to detect ARM architecture
-string _fHash (Hash)(string fileName) {
-	assert (isDigest!Hash);
-	File f = File(fileName);
 
+string produceHash(Hash)(string filename){
+	File f = File(filename);
 	// Hashing both name and file, to avoid having the same Hash on empty files
-	string nameRes = toHexString(digest!Hash(fileName));
+	string hname = toHexString(digest!Hash(filename));
 	// the file is read in chunks
-	string res = toHexString(digest!Hash(f.byChunk(4096*1024)));
-
+	string h = toHexString(digest!Hash(f.byChunk(4096*1024)));
 	// the result is a concatenated string
-	return nameRes ~ res;
+	return hname ~ h;
 }
 
-string fileHash (string fileName, string dig) {
-	// read from config the dig algorithm, choose on it
-	if (dig == "sha1"){
-	 	return _fHash!SHA1(fileName);
-	} else if ( dig == "crc32") {
-		return _fHash!CRC32(fileName);
-	} else if ( dig == "mmhash") {
-
+// PERFORMED IN ANOTHER THREAD (wrt fileHash)
+// determine the correct digest algorithm
+// call produceHash
+// send the obtained hash to the parend process
+string _fHash (HashParameters hp) {
+	assert (digestAlgorithms.canFind(hp.digest));
+	string hash;
+	if (hp.digest == "sha1"){
+	 	hash = produceHash!SHA1(hp.filename);
+	} else if ( hp.digest == "crc32") {
+		hash = produceHash!CRC32(hp.filename);
+	} else if ( hp.digest == "mmhash") {
 		if ( isX86_64()) {
-			return _fHash!(MurmurHash3!(128, 64))(fileName);
+			hash = produceHash!(MurmurHash3!(128, 64))(hp.filename);
 		} else {
-			return _fHash!(MurmurHash3!(128, 32))(fileName);
+			hash = produceHash!(MurmurHash3!(128, 32))(hp.filename);
 		}
-
 	} else {
-		return _fHash!SHA256(fileName);
+		hash = produceHash!SHA256(hp.filename);
 	}
+	// send the computed hash to the parent
+	return hash;
+}
+
+// takes a file and a digest identifier,
+// puts them in a struct which can be passed to a worker
+// a worker is a thread, the function communicates with it
+void fileHash (string[string] hashes, string dig) {
+
+	//Task[string] tasks;
+	int cnt = 0;
+	foreach (string filename; parallel(hashes.keys)){
+		HashParameters hp = HashParameters(filename, dig);
+		hashes[filename] = _fHash(hp);	
+		//tasks[filename] = task!_fHash(hp);
+		//tasks[filename].executeInNewThread();
+	}
+
+	//foreach (string filename; hashes.keys) {
+		//hashes[filename] = tasks[filename].yieldForce;
+		//writeln(filename, " ", hashes[filename]);
+	//}
+	// receive the computed hash
 }
 
 // compare the two hashes element by element

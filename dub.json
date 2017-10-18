@@ -4,7 +4,7 @@
 		"francesco"
 	],
 	"dependencies": {
-		"vibe-d": "~>0.7.30",
+		"vibe-d": "~>0.8.1",
 		"argsd": "~>0.3.0"
 	},
 
@@ -12,5 +12,4 @@
 	"copyright": "Copyright © 2017, francesco",
 	"license": "GPLv3",
 	"versions": ["VibeDisableCommandLineParsing"],
-	"buildOptions": ["debugMode","debugInfoC","verbose"]
 }
