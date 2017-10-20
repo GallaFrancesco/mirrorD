@@ -41,7 +41,6 @@ string produceHash(Hash)(string filename){
 // call produceHash
 // send the obtained hash to the parend process
 string _fHash (HashParameters hp) {
-	assert (digestAlgorithms.canFind(hp.digest));
 	string hash;
 	if (hp.digest == "sha1"){
 	 	hash = produceHash!SHA1(hp.filename);
@@ -63,22 +62,24 @@ string _fHash (HashParameters hp) {
 // takes a file and a digest identifier,
 // puts them in a struct which can be passed to a worker
 // a worker is a thread, the function communicates with it
-void fileHash (string[string] hashes, string dig) {
-
+bool fileHash (string[string] hashes, string dig) {
+	if (!digestAlgorithms.canFind(dig)) {
+		return false;
+	}
 	//Task[string] tasks;
 	int cnt = 0;
 	foreach (string filename; parallel(hashes.keys)){
 		HashParameters hp = HashParameters(filename, dig);
-		hashes[filename] = _fHash(hp);	
-		//tasks[filename] = task!_fHash(hp);
-		//tasks[filename].executeInNewThread();
+		hashes[filename] = _fHash(hp);
 	}
+	return true;
+}
 
-	//foreach (string filename; hashes.keys) {
-		//hashes[filename] = tasks[filename].yieldForce;
-		//writeln(filename, " ", hashes[filename]);
-	//}
-	// receive the computed hash
+string singleFileHash (string filename, string dig) {
+	string[string] nf;
+	nf [filename] = "";
+	fileHash (nf, dig);
+	return nf[filename];
 }
 
 // compare the two hashes element by element
@@ -96,25 +97,28 @@ unittest {
 	writeln(testfile);
 
 	string getHash (string dig) {
-		return fileHash(testfile, dig);
+		string[string] f;
+		f[testfile] = "";
+		fileHash(f, dig);
+		return f[testfile];
 	}
 	// simply equates two strings
 	assert (hashesEqual("aaaa","aaaa"));
 
 	// dig is the command line buffer, setting it and testing fileHash functionality
 	string dig = "sha1";
-	assert (hashesEqual( getHash(dig), _fHash!SHA1(testfile)));
+	assert (hashesEqual( getHash(dig), produceHash!SHA1(testfile)));
 
 	dig = "sha256";
-	assert (hashesEqual( getHash(dig), _fHash!SHA256(testfile)));
+	assert (hashesEqual( getHash(dig), produceHash!SHA256(testfile)));
 
 	dig = "crc32";
-	assert (hashesEqual( getHash(dig), _fHash!CRC32(testfile)));
+	assert (hashesEqual( getHash(dig), produceHash!CRC32(testfile)));
 
 	dig = "mmhash";
 	if (isX86_64()) {
-		assert (hashesEqual( getHash(dig), _fHash!(MurmurHash3!(128,64))(testfile)));
+		assert (hashesEqual( getHash(dig), produceHash!(MurmurHash3!(128,64))(testfile)));
 	} else {
-		assert (hashesEqual( getHash(dig), _fHash!(MurmurHash3!(128,32))(testfile)));
+		assert (hashesEqual( getHash(dig), produceHash!(MurmurHash3!(128,32))(testfile)));
 	}
 }

@@ -44,6 +44,8 @@ class FileInfoManager {
 		assert (this.root.info.isDir);
 
 		this._load (this.root);
+		// takes all the hashes and computes them
+		// useful to speed up the process at startup
 		this._computeHashes ();
 	}
 
@@ -92,14 +94,14 @@ class FileInfoManager {
 		if ( !( newInfo.timeLastModified.opEquals(file.info.timeLastModified ))) {
 			// date changed, check hash
 			if (!(newInfo.isDir)) {
-				//auto newHash = fileHash(newInfo.name, config().digest);
-				//if (!( hashesEqual(file.hash, newHash))) {
-					//// file change confirmed, substitute new info
-					//file.info = newInfo;
-					//file.hash = newHash;
-					//file.isChanged = true;
-					//return true;
-				//}
+				auto newHash = singleFileHash(newInfo.name, config().digest);
+				if (!( hashesEqual(file.hash, newHash))) {
+					// file change confirmed, substitute new info
+					file.info = newInfo;
+					file.hash = newHash;
+					file.isChanged = true;
+					return true;
+				}
 			}
 		}
 		return false;
