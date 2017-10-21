@@ -1,9 +1,13 @@
+
 import std.stdio;
 import std.utf;
 import std.file;
 import std.array;
 import utils_hash;
 import parseconfig;
+import std.exception;
+import vibe.core.log;
+import core.stdc.stdlib;
 
 class FileInfo {
 	string path;
@@ -27,11 +31,40 @@ class FileInfoManager {
 	// constructor, requires the root path 
 	this (string rp) {
 		// root path must exist
-		assert (exists(rp));
-
+		bool existent = false;
+		auto e = collectException (exists(rp), existent);
+		if (e !is null || !existent ) {
+			_dirNotFound(rp, e);
+		}
 		// save rootpath
 		this._rootPath = rp;
 		this._initialize ();
+	}
+
+	private bool _createDir(string path) {
+		auto e = collectException(mkdir(path));
+		if (e !is null) {
+			return false;
+		}
+		return true;
+	}
+
+	private void _dirNotFound(string rp, Exception e) {
+		// ask if the directory has to be created
+		logError("[load] Directory %s not found. Would you like to create it? [y/N]", rp);
+		char resp;
+		readf("%c", &resp);
+		// if so, create it, otherwise throw the exception and exit.
+		if (resp == 'y' || resp == 'Y') {
+			if (!_createDir(rp)) {
+				logFatal("[FATAL] Unable to create directory.");
+			} else {
+				logInfo("[load] Directory created, resuming load.");
+				return;
+			}
+		}
+		logError("[exit] Aborting.");
+		exit(1);
 	}
 
 	// initialize root directory
@@ -44,7 +77,13 @@ class FileInfoManager {
 		this.root.info = DirEntry (this.root.path);
 
 		//// root must be a directory
-		assert (this.root.info.isDir);
+		bool isdirectory = false;
+		auto e = collectException (this.root.info.isDir, isdirectory);
+		if (e !is null || !isdirectory) {
+			logFatal("[FATAL] File %s exists, but is not a directory.", this.root.path);
+			logError("[exit] Aborting.");
+			exit(1);
+		}
 
 		// build the tree
 		this._load (this.root);
@@ -154,7 +193,7 @@ class FileInfoManager {
 	private void _traverseCheck (FileInfo current) {
 		if ( this._changed(current)) {
 			// TODO manage change in files
-			writefln("[changed] %s", current.path);
+			logInfo("[changed] %s", current.path);
 		}
 		if (current.info.isDir)  {
 			this._scanNew(current);
@@ -170,11 +209,12 @@ class FileInfoManager {
 	// (use this to check for changes)
 	// if new files are found,
 	public void reload () { 
-		writefln("Started reloading: %s", this.root.path);
+		logInfo("[load] Started reloading: %s", this.root.path);
 		this._traverseCheck (this.root);
 		if (this._needComputeHash) {
 			_computeHashes();
 			_loadHashes();
+			this._needComputeHash = false;
 		}
 		printTree();
 	}
@@ -182,7 +222,7 @@ class FileInfoManager {
 //-- Debugging purposes, from here downwards
 
 	private void _print (FileInfo root) {
-		writefln ("[loaded] %s: %s", root.path, root.hash);
+		logInfo ("[load] Finished: %s: %s", root.path, root.hash);
 		foreach (FileInfo child; root.children) {
 			_print(child);
 		}

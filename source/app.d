@@ -20,13 +20,13 @@ void main(string[] args)
 	// settings for the http server
 	auto settings = new HTTPServerSettings;
 	settings.port = 8080;
-	settings.bindAddresses = ["::1", "127.0.0.1"];
+	settings.bindAddresses = ["127.0.0.1"];
 	listenHTTP(settings, router);
 
 	auto fi = new FileInfoManager (config().directory);	
 	setTimer(10.seconds, &fi.reload, true);
 
 	// run the webserver
-	logInfo("Please open http://127.0.0.1:8080/api/ in your browser.");
+	logInfo("[serv] Please open http://127.0.0.1:8080/api/ in your browser.");
 	runApplication();
 }
