@@ -1,4 +1,5 @@
 import vibe.vibe;
+import vibe.core.core;
 import restapi;
 import fileinfo;
 import parseconfig;
@@ -21,9 +22,11 @@ void main(string[] args)
 	settings.port = 8080;
 	settings.bindAddresses = ["::1", "127.0.0.1"];
 	listenHTTP(settings, router);
+
 	auto fi = new FileInfoManager (config().directory);	
+	setTimer(10.seconds, &fi.reload, true);
 
 	// run the webserver
 	logInfo("Please open http://127.0.0.1:8080/api/ in your browser.");
-	//runApplication();
+	runApplication();
 }

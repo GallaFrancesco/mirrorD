@@ -20,12 +20,15 @@ class FileInfoManager {
 	// contains a FileInfo structure
 	FileInfo root;
 	string[string] hashes;
+	FileInfo[string] nodes;
 	private string _rootPath;
+	private bool _needComputeHash;
 
 	// constructor, requires the root path 
 	this (string rp) {
 		// root path must exist
 		assert (exists(rp));
+
 		// save rootpath
 		this._rootPath = rp;
 		this._initialize ();
@@ -40,18 +43,36 @@ class FileInfoManager {
 		this.root.isRoot = true;
 		this.root.info = DirEntry (this.root.path);
 
-		// root must be a directory
+		//// root must be a directory
 		assert (this.root.info.isDir);
 
+		// build the tree
 		this._load (this.root);
+
 		// takes all the hashes and computes them
 		// useful to speed up the process at startup
 		this._computeHashes ();
+		// insert the hashes into the tree nodes
+		this._loadHashes();
+		this.printTree();
 	}
 
 	private void _computeHashes () {
 		fileHash(this.hashes, config().digest);
-		writeln(this.hashes);
+	}
+
+	// creates a reference to the node in the aa nodes
+	// used to load the computed hashes at startup
+	private void _refNode (string filename, ref FileInfo node) {
+		nodes[filename] = node;
+	}
+
+	// after the hashes have been computed
+	// load them inside the tree nodes
+	private void _loadHashes () {
+		foreach (string filename; this.hashes.keys) {
+			nodes[filename].hash = hashes[filename];
+		}
 	}
 
 	private FileInfo _createNode (DirEntry d) {
@@ -59,9 +80,11 @@ class FileInfoManager {
 		f.path = d.name;
 		f.isRoot = false;
 		f.info = d;
+
 		if (!d.isDir) {
-			//f.hash = fileHash(f.path, config().digest);
+			// append the filename to the hashes to be computed
 			hashes[f.path] = "";
+			_refNode(f.path, f);
 		}
 		return f;
 	}
@@ -111,7 +134,6 @@ class FileInfoManager {
 	// check for new files in the subdir
 	// use dirEntries
 	private void _scanNew (FileInfo dir) {
-
 		foreach (DirEntry i; dirEntries(dir.path, SpanMode.shallow, false)) {
 			// if the associative array of children
 			// does not contain the key name
@@ -120,6 +142,7 @@ class FileInfoManager {
 				FileInfo newFile = this._createNode(i);
 				// add it to the children
 				dir.children[i.name] = newFile;
+				this._needComputeHash = true;
 			}
 		}
 	}
@@ -129,27 +152,37 @@ class FileInfoManager {
 	// on each node / leaf, check for changes
 	// check is performed using date and hashing (only when dates don't match)
 	private void _traverseCheck (FileInfo current) {
-
 		if ( this._changed(current)) {
 			// TODO manage change in files
+			writefln("[changed] %s", current.path);
 		}
-		this._scanNew(current);
+		if (current.info.isDir)  {
+			this._scanNew(current);
+		}
 
 		foreach (FileInfo child; current.children.values) {
+
 			_traverseCheck(child);
 		}
 	}
 
 	// reload the tree rooted @ this.root
 	// (use this to check for changes)
-	public void reload () {
+	// if new files are found,
+	public void reload () { 
+		writefln("Started reloading: %s", this.root.path);
 		this._traverseCheck (this.root);
+		if (this._needComputeHash) {
+			_computeHashes();
+			_loadHashes();
+		}
+		printTree();
 	}
 
 //-- Debugging purposes, from here downwards
 
 	private void _print (FileInfo root) {
-		writefln ("%s", root.path);
+		writefln ("[loaded] %s: %s", root.path, root.hash);
 		foreach (FileInfo child; root.children) {
 			_print(child);
 		}
