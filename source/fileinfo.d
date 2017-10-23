@@ -19,6 +19,11 @@ class FileInfo {
 	FileInfo[string] children;
 }
 
+// this map holds the roots, keyed by root path
+// the roots are taken from configuration
+// it is used by the REST API to access the hierarchy of directories
+static FileInfoManager[string] rootInfoMap;
+
 class FileInfoManager {
 
 	// contains a FileInfo structure
@@ -93,6 +98,9 @@ class FileInfoManager {
 		this._computeHashes ();
 		// insert the hashes into the tree nodes
 		this._loadHashes();
+
+		// append this manager to the map after loading 
+		rootInfoMap[this.root.path] = this;
 		this.printTree();
 	}
 
@@ -217,6 +225,15 @@ class FileInfoManager {
 			this._needComputeHash = false;
 		}
 		printTree();
+	}
+
+	public string treeList () {
+		logInfo("[DEBUG] returning directory list for: %s", this.root.path);
+		string list = "";
+		foreach (string dir; this.hashes.keys) {
+			list ~= dir ~ "\n";
+		}
+		return list;
 	}
 
 //-- Debugging purposes, from here downwards
