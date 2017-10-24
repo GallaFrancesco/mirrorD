@@ -2,8 +2,15 @@ import vibe.d;
 import fileinfo;
 import utils_json;
 
+// this RESTful api uses JSON
+// to encode control messages
 @path("/")
 interface restApi {
+
+	// get a list of roots
+	// managed on this server
+	Json getRoots();
+
 	@path(":root")
 	Json getRootDir(string _root);
 
@@ -14,10 +21,16 @@ interface restApi {
 class FileAPI: restApi {
 	// generic get on root, displays an hello.
 	private	FileInfoManager rootManager;
+	private string[] rootList;
 
 	// assign fileInfoManager to the API
-	this(FileInfoManager rManager) {
+	this(FileInfoManager rManager, string[] list) {
 		rootManager = rManager;
+		rootList = list;
+	}
+
+	override Json getRoots() {
+		return encodeAsJson(rootList);
 	}
 
 	// this shows the directories inside the tree
@@ -26,7 +39,6 @@ class FileAPI: restApi {
 	}
 
 	//override Json getFolders(string  
-	// TODO finish this, on / it should display a list of roots
 	// TODO it should be possible to authenticate
 	// TODO it should provide the entire tree, json encoded, by nesting them
 
