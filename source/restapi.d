@@ -31,8 +31,11 @@ interface restApi {
 }
 
 class FileAPI: restApi {
+	// the rootInfoManager in main
 	private	FileInfoManager[string] rootManager;
+
 	// used to link the endpoint name to the root path
+	// this guarantees only @safe operations are used
 	private string[string] rootList;
 
 	// assign fileInfoManager to the API
@@ -44,9 +47,10 @@ class FileAPI: restApi {
 		foreach (string r; rootList) {
 			logInfo("[REST] %s", r);
 		}
-
 	}
 
+	// sends a json with encoded endpoint:path pairs
+	// for each root directory managed
 	@safe
 	override Json getRoots() {
 		if (rootList !is null) {
@@ -59,19 +63,30 @@ class FileAPI: restApi {
 	// this shows the directories inside the tree
 	@safe
 	override Json getRootDir(string dir) {
-		// test membership
-		string path = rootList[dir];
-		FileInfoManager *f;
-		f = (path in rootManager);
-		if (f !is null) {
-			return encodeAsJson(f.root.path); 
-		} else {
-			return encodeAsJson("[ERROR] no path " ~ dir ~ " found");
+		// test membership is compulsory
+		// to avoid Range Violation exceptions
+
+		// test dir is a key in rootList
+		string *s;
+		s = (dir in rootList);
+
+		// if it is
+		// test path is a key in rootManager
+		if (s !is null) {
+			string path = rootList[dir];
+			FileInfoManager *f;
+			f = (path in rootManager);
+
+			// everything went fine: the directory is managed
+			if (f !is null) {
+				return encodeAsJson(f.root.path);
+			}
 		}
+		// the directory is not managed, send error
+		// TODO error codes
+		return encodeAsJson("[ERROR] no path " ~ dir ~ " found");
 	}
 
-	//override Json getFolders(string  
 	// TODO it should be possible to authenticate
-	// TODO it should provide the entire tree, json encoded, by nesting them
 
 }
