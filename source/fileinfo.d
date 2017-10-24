@@ -22,7 +22,6 @@ class FileInfo {
 // this map holds the roots, keyed by root path
 // the roots are taken from configuration
 // it is used by the REST API to access the hierarchy of directories
-static FileInfoManager[string] rootInfoMap;
 
 class FileInfoManager {
 
@@ -100,7 +99,6 @@ class FileInfoManager {
 		this._loadHashes();
 
 		// append this manager to the map after loading 
-		rootInfoMap[this.root.path] = this;
 		this.printTree();
 	}
 

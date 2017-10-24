@@ -18,14 +18,20 @@ void main(string[] args)
 		return;
 	}
 
+	// a map holding all the roots
+	// keyed on the root paths
+	FileInfoManager[string] rootInfoMap;
+
 	// add root directories to the map
 	auto fi = new FileInfoManager (config().directory);
+	rootInfoMap[fi.root.path] = fi;
+
 	// set timer to update folders
 	setTimer(10.seconds, &rootInfoMap[fi.root.path].reload, true);
 
 	// register the REST APIs (one for each directory
 	auto router = new URLRouter;
-	router.registerRestInterface(new FileAPI(fi, rootInfoMap.keys);
+	router.registerRestInterface(new FileAPI(rootInfoMap));
 
 	// settings for the http server
 	auto settings = new HTTPServerSettings;
