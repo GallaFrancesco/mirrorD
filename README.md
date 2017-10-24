@@ -36,9 +36,11 @@ The default configuration is only for testing purposes.
 To test mirrorD, navigate to the repository directory, then:
 
 ```
-user@/path/to/repo$ mkdir -p test/testfile
+user@/path/to/repo$ mkdir -p test/
 user@/path/to/repo$ ./mirrord
 ```
+You should be prompted to create a directory named `testfile`, which has the purpose to test the interactive directory creation. Theprogram should then start the event loop. Populating `test/testfile/` with random files can be done at runtime, the timed reload takes care of adding them to the tree.
+
 #### CLI arguments
 
 Command line arguments are very few at the moment:
