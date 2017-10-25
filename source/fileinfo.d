@@ -27,6 +27,7 @@ class FileInfoManager {
 
 	// contains a FileInfo structure
 	FileInfo root;
+	bool isValid = true;
 	string[string] hashes;
 	FileInfo[string] nodes;
 	private string _rootPath;
@@ -38,11 +39,16 @@ class FileInfoManager {
 		bool existent = false;
 		auto e = collectException (exists(rp), existent);
 		if (e !is null || !existent ) {
-			_dirNotFound(rp, e);
+			if (_dirNotFound(rp, e)) {
+				// directory not found AND not created (by choice)
+				// set the manager as invalid, will be excluded
+				this.isValid = false;
+			}
 		}
-		// save rootpath
-		this._rootPath = rp;
-		this._initialize ();
+		if (this.isValid) {
+			this._rootPath = rp;
+			this._initialize ();
+		}
 	}
 
 	private bool _createDir(string path) {
@@ -53,7 +59,7 @@ class FileInfoManager {
 		return true;
 	}
 
-	private void _dirNotFound(string rp, Exception e) {
+	private bool _dirNotFound(string rp, Exception e) {
 		// ask if the directory has to be created
 		logError("[load] Directory %s not found. Would you like to create it? [y/N]", rp);
 		char resp;
@@ -61,14 +67,16 @@ class FileInfoManager {
 		// if so, create it, otherwise throw the exception and exit.
 		if (resp == 'y' || resp == 'Y') {
 			if (!_createDir(rp)) {
-				logFatal("[FATAL] Unable to create directory.");
+				logFatal("[FATAL] Unable to create directory %s", rp);
+				logError("[FATAL] Aborting.");
+				exit(1);
 			} else {
-				logInfo("[load] Directory created, resuming load.");
-				return;
+				logInfo("[load] Directory %s created, resuming load.", rp);
+				return false;
 			}
 		}
-		logError("[exit] Aborting.");
-		exit(1);
+		logInfo("[load] Directory %s excluded from root list, resuming load.", rp);
+		return true;
 	}
 
 	// initialize root directory
@@ -90,6 +98,7 @@ class FileInfoManager {
 		}
 
 		// build the tree
+		logInfo("[load] Loading the tree rooted at: %s", this.root.path);
 		this._load (this.root);
 
 		// takes all the hashes and computes them
@@ -237,7 +246,7 @@ class FileInfoManager {
 //-- Debugging purposes, from here downwards
 
 	private void _print (FileInfo root) {
-		logInfo ("[load] Finished: %s: %s", root.path, root.hash);
+		//logInfo ("[load] Finished: %s: %s", root.path, root.hash);
 		foreach (FileInfo child; root.children) {
 			_print(child);
 		}

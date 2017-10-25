@@ -1,18 +1,11 @@
-import vibe.d;
+import vibe.appmain;
+import vibe.http.server;
+import vibe.web.rest;
+import vibe.data.json;
 import fileinfo;
 import utils_json;
+import utils_string;
 import vibe.core.log;
-import std.array;
-
-string[string] stripPathLoad (string[] pathArray) {
-	string endpt;
-	string[string] aa;
-	foreach (string path; pathArray) {
-		endpt = (split(path, '/'))[$-1];
-		aa[endpt] = path;
-	}
-	return aa;
-}
 
 // this RESTful api uses JSON
 // to encode control messages
@@ -44,8 +37,8 @@ class FileAPI: restApi {
 		rootList = stripPathLoad(rootManager.keys);
 		// debugging log
 		logInfo("[REST] initialized API. Printing list of roots:");
-		foreach (string r; rootList) {
-			logInfo("[REST] %s", r);
+		foreach (string r; rootList.keys) {
+			logInfo("[REST] %s: %s",rootList[r], r);
 		}
 	}
 
@@ -84,7 +77,7 @@ class FileAPI: restApi {
 		}
 		// the directory is not managed, send error
 		// TODO error codes
-		return encodeAsJson("[ERROR] no path " ~ dir ~ " found");
+		return encodeAsJson("[ERROR] no path '" ~ dir ~ "' found");
 	}
 
 	// TODO it should be possible to authenticate

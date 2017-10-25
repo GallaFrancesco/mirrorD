@@ -4,12 +4,16 @@
 		"francesco"
 	],
 	"dependencies": {
-		"vibe-d": "~>0.8.1",
-		"argsd": "~>0.3.0"
+		"vibe-d": 		"~>0.8.1",
+		"vibe-d:tls": 	"~>0.8.1",
+		"argsd": 		"~>0.3.0"
+	},
+	"subConfigurations": {
+		"vibe-d:tls": 	"openssl"
 	},
 
-	"description": "A simple vibe.d server application.",
-	"copyright": "Copyright © 2017, francesco",
-	"license": "GPLv3",
-	"versions": ["VibeDisableCommandLineParsing"],
+	"description": 	"A simple vibe.d server application.",
+	"copyright": 	"Copyright © 2017, francesco",
+	"license": 		"GPLv3",
+	"versions": 	["VibeDisableCommandLineParsing"]
 }

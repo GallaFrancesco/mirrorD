@@ -92,7 +92,7 @@ unittest {
 	import args : parseArgsWithConfigFile;
 
 	string cwd = getcwd();
-	string testfile = cwd ~ "/test/testfile";
+	string testfile = cwd ~ "/test/testfileHash";
 	File f = File (testfile);
 	writeln(testfile);
 

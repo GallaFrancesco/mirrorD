@@ -4,6 +4,7 @@ import vibe.core.core;
 import restapi;
 import fileinfo;
 import parseconfig;
+import utils_string;
 import args;
 
 static string desc = "mirrord is a web server.\nIt can be used to monitor and mirror one or more directories in a decentralized way.";
@@ -22,10 +23,13 @@ FileInfoManager[string] initializeManagers() {
 	uint tout = config().timeout;
 
 	foreach (string dir; dirs)  {
-		fi = new FileInfoManager(dir);
-		fm[fi.root.path] = fi;
+
+		fi = new FileInfoManager(stripChar!('/')(dir));
+		if (fi.isValid) {
+			fm[fi.root.path] = fi;
+			setTimer(tout.minutes, &fm[fi.root.path].reload, true);
+		}
 		// set timer to update folders
-		setTimer(tout.minutes, &fm[fi.root.path].reload, true);
 	}
 	return fm;
 }
@@ -35,6 +39,12 @@ HTTPServerSettings setHTTPserver () {
 	auto settings = new HTTPServerSettings;
 	settings.port = config().port;
 	settings.bindAddresses = configWriteable().addresses;
+
+	// ssl (for HTTPS serving) 
+	//settings.tlsContext = createTLSContext(TLSContextKind.server);
+	//settings.tlsContext.useCertificateChainFile("server-cert.pem");
+	//settings.tlsContext.usePrivateKeyFile("server-key.pem");
+
 	return settings;
 }
 
